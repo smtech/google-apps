@@ -1,0 +1,15 @@
+{
+    "name": "smtech/google-apps",
+    "description": "Various Google Apps for Education customizations and tag-alongs",
+    "require": {
+        "smtech/stmarkssmarty": "dev-master"
+    },
+    "license": "GPL-3.0",
+    "authors": [
+        {
+            "name": "Seth Battis",
+            "email": "SethBattis@stmarksschool.org"
+        }
+    ],
+    "minimum-stability": "dev"
+}

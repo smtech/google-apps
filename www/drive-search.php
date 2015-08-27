@@ -1,108 +1,79 @@
 <?php
 
-/* set some reasonable default values */
-// search button name and default title text
-$search = (!empty($_REQUEST['submit']) ? $_REQUEST['submit'] : "Search");
+/*
+	
+https://skunkworks.stmarksschool.org/google/drive-search.php?domain=stmarksschool.org&within=to%3Afacultyresources%40stmarksschool.org&target=_blank&title=Faculty%20Resources&browse_url=https%3A%2F%2Fdrive.google.com%2Fa%2Fstmarksschool.org%2Ffolderview%3Fid%3D0Bx1atGpuKjk9YkNyb2Q1RUNoOWM%26usp%3Dsharing&directions=If%20you%20are%20not%20already%20logged%20in%20to%20your%20Google%20Apps%20account%2C%20you%20will%20be%20asked%20to%20log%20in%20to%20view%20the%20search%20results.
 
-// title text
-$title = (!empty($_REQUEST['title']) ? $_REQUEST['title'] : $search);
+*/
 
-// optional directions
-$directions = (!empty($_REQUEST['directions']) ? $_REQUEST['directions'] : null);
+require_once('common.inc.php');
 
 // optional google apps domain
-$domain = (!empty($_REQUEST['domain']) ? $_REQUEST['domain'] : null);
-
-// optional restrictions to be added to the search (e.g. 'to:user@domain.com')
-$within = (!empty($_REQUEST['within']) ? $_REQUEST['within'] : null);
-
-// href target for search
-$target = (!empty($_REQUEST['target']) ? $_REQUEST['target'] : '_top');
-
-// query placeholder in search form
-$placeholder = (!empty($_REQUEST['placeholder']) ? $_REQUEST['placeholder'] : 'Enter your search query here&hellip;');
-
-// optional url to a file browsing interface (e.g. Google Drive)
-$browseUrl = (!empty($_REQUEST['browse_target']) ? $_REQUEST['browse_url'] : null);
-
-// browse link text
-$browseText = (!empty($_REQUEST['browse_text']) ? $_REQUEST['browse_text'] : 'Browse');
-
-// href target of browse link
-$browseTarget = (!empty($_REQUEST['browse_target']) ? $_REQUEST['browse_target'] : '_top');
-
-// optional url to css styleheet
-$css = (!empty($_REQUEST['css']) ? $_REQUEST['css'] : null);
-
-/**
- * If $b isn't empty, then return $a
- **/
-function showAifB($a, $b) {
-	if (!empty($b)) {
-		return $a;
-	}
+$domain = (!empty($_REQUEST['domain']) ? $_REQUEST['domain'] : false);
+if ($domain) {
+	$formHidden['domain'] = $domain;
 }
-
-/**
- * If $value isn't empty, return a hidden input field
- **/
-function hiddenField($name, $value) {
-	return showAifB('<input name="' . $name . '" value="' . $value . '" type="hidden" />', $value);
+	
+// optional restrictions to be added to the search (e.g. 'to:user@domain.com')
+$within = (!empty($_REQUEST['within']) ? $_REQUEST['within'] : false);
+if ($within) {
+	$formHidden['within'] = $within;
 }
 
 /* if we're receiving query, handle that rather than showing a form */
 if (isset($_REQUEST['query'])) {
-	header('Location: https://drive.google.com/' . (!empty($_REQUEST['domain']) ? "a/{$_REQUEST['domain']}/" : '') . "#search/{$_REQUEST['query']}" . showAifB(" $within", $within));
+	header('Location: https://drive.google.com/' . (!empty($domain) ? "a/$domain/" : '') . "#search/{$_REQUEST['query']}" . (!empty($within) ? " $within" : ''));
 	exit;
-}	
+} else {
+	// search button name and default title text
+	if (!empty($_REQUEST['submit'])) {
+		$smarty->assign('search', $_REQUEST['submit']);
+	}
+	
+	// title text
+	if (!empty($_REQUEST['title'])) {
+		$smarty->assign('title', $_REQUEST['title']);
+	}
+	
+	// optional directions
+	if (!empty($_REQUEST['directions'])) {
+		$smarty->assign('directions', $_REQUEST['directions']);
+	}
+	
+	// href target for search
+	if (!empty($_REQUEST['target'])) {
+		$smarty->assign('target', $_REQUEST['target']);
+	}
+	
+	// query placeholder in search form
+	if (!empty($_REQUEST['placeholder'])) {
+		$smarty->assign('placeholder', $_REQUEST['placeholder']);
+	}
+	
+	// optional url to a file browsing interface (e.g. Google Drive)
+	if (!empty($_REQUEST['browse_url'])) {
+		$smarty->assign('browseUrl', $_REQUEST['browse_url']);
+	}
+	
+	// browse link text
+	if (!empty($_REQUEST['browse_text'])) {
+		$smarty->assign('browseText', $_REQUEST['browse_text']);
+	}
+	
+	// href target of browse link
+	if (!empty($_REQUEST['browse_target'])) {
+		$smarty->assign('browseTarget', $_REQUEST['browse_target']);
+	}
+	
+	$smarty->addStylesheet(dirname($_SERVER['REQUEST_URI']) . '/css/drive-search.css');
+
+	// optional url to css styleheet
+	if (!empty($_REQUEST['css'])) {
+		$smarty->addStylesheet($_REQUEST['css'], 'custom');
+	}
+
+	$smarty->assign('formHidden', $formHidden);
+	$smarty->display('drive-search.tpl');
+}
 
 ?>
-<html>
-<head>
-	<style>
-		body {
-			font-family: Arial, Helvetica, sans-serif;
-			font-size: 12pt;
-		}
-		
-		h1 {
-			font-size: 14pt;
-			font-weight: bold;
-			margin: 0;
-			padding: 0;
-		}
-		
-		.container {
-			display: table;
-			width: 100%;
-		}
-		
-		.visible {
-			display: table-cell;
-			vertical-align: middle;
-			padding: 3px;
-		}
-		
-		.auto-expand, input[type=text] {
-			width: 100%;
-		}
-	</style>
-	<?= showAifB('<link rel="stylesheet" href="' . $css . '" />', $css); ?>
-</head>
-<body>
-	<h1><?= $title ?><?= showAifB(' | <a href="' . $browseUrl . '" target="' . $browseTarget . '">' . $browseText . '</a>', $browseUrl) ?></h1>
-	<?= showAifB('<label for="query">' . $directions .'</label>', $directions) ?>
-	<div class="container">
-		<form action="<?= $_SERVER['PHP_SELF'] ?>" target="<?= $target ?>">
-			<?= hiddenField('domain', $domain) ?>
-			<?= hiddenField('within', $within) ?>
-			<div class="auto-expand visible">
-				<input name="query" type="text" placeholder="<?= $placeholder ?>" />
-			</div>
-			<div class="visible">
-				<input type="submit" value="<?= $search ?>" />
-			</div>
-		</form>
-	</div>
-</body>
-</html>
